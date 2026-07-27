@@ -9,22 +9,16 @@
 // 실행:
 // cargo run --release
 
-use chrono::{Local, Timelike};
+use chrono::{Local, Timelike, Datelike}; //Datelike 추
 use eframe::egui;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{thread_rng, Rng}; //Rng 추가
 use std::time::{Duration, Instant};
 
 // ─────────────────────────────────────────────
 // 시간대 구분
 // ─────────────────────────────────────────────
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum Time {
-    Morning,   // 06~12시
-    Afternoon, // 12~18시
-    Evening,   // 18~24시
-    Night,     // 00~06시
-}
 
 enum TimeSlot {
     Morning,   // 06~12시
@@ -44,65 +38,89 @@ impl TimeSlot {
     }
 }
 
-    fn avatars_morning() -> Vec<&'static str> {
-        vec![
-            "(=^･ω･^=)",
-            "(✿◠‿◠)",
-            "(ﾉ´ヮ`)ﾉ*:･ﾟ✧",
-            "(*´▽`*)",
-            "(＾▽＾)",
-            "ヽ(・∀・)ﾉ",
-            "(◕‿◕✿)",
-            "☆*:.｡.o(≧▽≦)o.｡.:*☆",
-            "(｡•̀ᴗ-)✧",
-            "(*ゝω・)ﾉ",
-        ]
+// 요일 한국어 변환 함수
+fn korean_weekday(weekday: chrono::Weekday) -> &'static str {
+    match weekday {
+        chrono::Weekday::Mon => "월요일",
+        chrono::Weekday::Tue => "화요일",
+        chrono::Weekday::Wed => "수요일",
+        chrono::Weekday::Thu => "목요일",
+        chrono::Weekday::Fri => "금요일", 
+        chrono::Weekday::Sat => "토요일",
+        chrono::Weekday::Sun => "일요일",
     }
+}
 
-    fn avatars_afternoon() -> Vec<&'static str> {
-        vec![
-            "( •̀ ω •́ )✧",
-            "(ง •̀_•́)ง",
-            "(`・ω・´)",
-            "(๑•̀ㅂ•́)و✧",
-            "ᕙ(⇀‸↼‶)ᕗ",
-            "(￣ー￣)ｂ",
-            "(*`・v・)",
-            "٩(ˊᗜˋ*)و",
-            "(•̀o•́)ง",
-            "ヽ(°〇°)ﾉ",
-        ]
-    }
+fn get_mock_weather() -> String {
+    let conditions = vec![
+        "맑음", "흐림", "비", "눈", "안개", "소나기", "천둥번개", "눈/비", "바람", "폭염",
+    ];
+    let mut rng = thread_rng();
+    let condition = conditions.choose(&mut rng).unwrap();
+    let temperature: i32 = rng.gen_range(-10..=35);
+    format!("{}°C, {}", temperature, condition)
+}
 
-    fn avatars_evening() -> Vec<&'static str> {
-        vec![
-            "(￣▽￣)",
-            "(´▽`ʃ♡ƪ)",
-            "( ˘ω˘ )zzZ",
-            "(｡◕‿◕｡)",
-            "(*´ω`*)",
-            "( ´ ▽ ` )ﾉ",
-            "(ᵔᴥᵔ)",
-            "( ˙꒳​˙ )",
-            "(＠＾◡＾)",
-            "╰(*´︶`*)╯",
-        ]
-    }
 
-    fn avatars_night() -> Vec<&'static str> {
-        vec![
-            "(；￣Д￣)",
-            "(￣o￣) zzZZzzZZ",
-            "( ˘ω˘ ) zzz",
-            "(´-ω-`)",
-            "(-_-)zzz",
-            "(。-ω-)zzz",
-            "( ¯ ³¯)♡",
-            "(´q｀●)",
-            "( ˇ෴ˇ )",
-            "(ᴗ_ᴗ)",
-        ]
-    }
+fn avatars_morning() -> Vec<&'static str> {
+    vec![
+        "(=^･ω･^=)",
+        "(✿◠‿◠)",
+        "(ﾉ´ヮ`)ﾉ*:･ﾟ✧",
+        "(*´▽`*)",
+        "(＾▽＾)",
+        "ヽ(・∀・)ﾉ",
+        "(◕‿◕✿)",
+        "☆*:.｡.o(≧▽≦)o.｡.:*☆",
+        "(｡•̀ᴗ-)✧",
+        "(*ゝω・)ﾉ",
+    ]
+}
+
+fn avatars_afternoon() -> Vec<&'static str> {
+    vec![
+        "( •̀ ω •́ )✧",
+        "(ง •̀_•́)ง",
+        "(`・ω・´)",
+        "(๑•̀ㅂ•́)و✧",
+        "ᕙ(⇀‸↼‶)ᕗ",
+        "(￣ー￣)ｂ",
+        "(*`・v・)",
+        "٩(ˊᗜˋ*)و",
+        "(•̀o•́)ง",
+        "ヽ(°〇°)ﾉ",
+    ]
+}
+
+fn avatars_evening() -> Vec<&'static str> {
+    vec![
+        "(￣▽￣)",
+        "(´▽`ʃ♡ƪ)",
+        "( ˘ω˘ )zzZ",
+        "(｡◕‿◕｡)",
+        "(*´ω`*)",
+        "( ´ ▽ ` )ﾉ",
+        "(ᵔᴥᵔ)",
+        "( ˙꒳˙ )",
+        "(＠＾◡＾)",
+        "╰(*´︶`*)╯",
+    ]
+}
+
+fn avatars_night() -> Vec<&'static str> {
+    vec![
+        "(；￣Д￣)",
+        "(￣o￣) zzZZzzZZ",
+        "( ˘ω˘ ) zzz",
+        "(´-ω-`)",
+        "(-_-)zzz",
+        "(。-ω-)zzz",
+        "( ¯ ³¯)♡",
+        "(´q｀●)",
+        "( ˇ෴ˇ )",
+        "(ᴗ_ᴗ)",
+    ]
+}
 
 // ─────────────────────────────────────────────
 // 문구 데이터
@@ -399,6 +417,8 @@ struct LumiClock {
     // 현재 표시 문구
     current_phrase: String,
 
+    current_weather: String,
+
     // 마지막 갱신 시각
     last_update: Instant,
 }
@@ -466,6 +486,7 @@ impl LumiClock {
             adeck_night: an,
             current_avatar: initial_avatar.to_string(),
             current_phrase: initial.to_string(),
+            current_weather: get_mock_weather(),
             last_update: Instant::now(),
         }
     }
@@ -544,6 +565,8 @@ impl LumiClock {
         if let Some(a) = adeck.pop() {
             self.current_avatar = a.to_string();
         }
+
+        self.current_weather = get_mock_weather();
     }
 }
 
@@ -572,16 +595,17 @@ impl eframe::App for LumiClock {
         let avatar = self.current_avatar.clone();
 
         let time_text = now.format("%H:%M:%S").to_string();
-        let date_text = now.format("%Y-%m-%d %A").to_string();
+        let date_text = format!("{} {}", now.format("%Y-%m-%d"), korean_weekday(now.weekday()));
         let phrase = self.current_phrase.clone();
+        let weather_str = format!("LumiClock 1.0.1b Weather : {}", self.current_weather);
 
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::default()
-                    .fill(egui::Color32::from_rgb(17, 19, 24))
+                    .fill(egui::Color32::from_rgba_unmultiplied(17, 19, 24, 150))
                     .stroke(egui::Stroke::new(
                         1.0_f32,
-                        egui::Color32::from_rgba_unmultiplied(255, 255, 255, 18),
+                        egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30),
                     )),
             )
             .show(ctx, |ui| {
@@ -610,7 +634,7 @@ impl eframe::App for LumiClock {
                     );
                     ui.add_space(14.0);
                     ui.label(
-                        egui::RichText::new("Commit : -- Weather : --")
+                        egui::RichText::new(weather_str)
                             .size(12.0)
                             .color(egui::Color32::from_rgb(170, 179, 197)),
                     );
@@ -635,7 +659,8 @@ fn main() -> eframe::Result<()> {
             .with_title("LumiClock")
             .with_inner_size([380.0, 240.0])
             .with_min_inner_size([320.0, 220.0])
-            .with_always_on_top()
+            .with_always_on_top() // 이미 존재하는 최상단 고정 기능
+            .with_transparent(true) // 글래스 효과를 위해 반드시 추가해야 함!
             .with_resizable(true),
         ..Default::default()
     };
