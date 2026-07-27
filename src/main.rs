@@ -575,6 +575,11 @@ impl LumiClock {
 // ─────────────────────────────────────────────
 
 impl eframe::App for LumiClock {
+
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
+        [0.0, 0.0, 0.0, 0.0] // 빨강, 초록, 파랑, 투명도(Alpha)를 모두 0으로 텅 비우기!
+    }
+    
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         ctx.request_repaint_after(Duration::from_millis(200));
 
@@ -597,7 +602,8 @@ impl eframe::App for LumiClock {
         let time_text = now.format("%H:%M:%S").to_string();
         let date_text = format!("{} {}", now.format("%Y-%m-%d"), korean_weekday(now.weekday()));
         let phrase = self.current_phrase.clone();
-        let weather_str = format!("LumiClock 1.0.1b Weather : {}", self.current_weather);
+        let weather_str = format!(" Weather : {}", self.current_weather);
+        let version = format!("LumiClk 1.0.1b");
 
         egui::CentralPanel::default()
             .frame(
@@ -635,6 +641,12 @@ impl eframe::App for LumiClock {
                     ui.add_space(14.0);
                     ui.label(
                         egui::RichText::new(weather_str)
+                            .size(12.0)
+                            .color(egui::Color32::WHITE),
+                    );
+                    ui.add_space(4.0);
+                    ui.label(
+                        egui::RichText::new(version)
                             .size(12.0)
                             .color(egui::Color32::from_rgb(170, 179, 197)),
                     );
